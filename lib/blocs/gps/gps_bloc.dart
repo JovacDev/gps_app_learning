@@ -22,12 +22,15 @@ class GpsBloc extends Bloc<GpsEvent, GpsState> {
   }
 
   Future<void> _init() async {
-    final gpsInitStatus =
-        await Future.wait([_checkGpsStatus(), _isPermissionGranted()]);
+    final gpsInitStatus = await Future.wait([
+      _checkGpsStatus(),
+      _isPermissionGranted(),
+    ]);
 
     add(GpsAndPermissionEvent(
-        isGpsEnabled: gpsInitStatus[0],
-        isGpsPermissionGranted: gpsInitStatus[1]));
+      isGpsEnabled: gpsInitStatus[0],
+      isGpsPermissionGranted: gpsInitStatus[1],
+    ));
   }
 
   Future<bool> _isPermissionGranted() async {
@@ -36,31 +39,36 @@ class GpsBloc extends Bloc<GpsEvent, GpsState> {
   }
 
   Future<bool> _checkGpsStatus() async {
-    final isEnabled = await Geolocator.isLocationServiceEnabled();
+    final isEnable = await Geolocator.isLocationServiceEnabled();
+
     gpsServiceSubscription =
         Geolocator.getServiceStatusStream().listen((event) {
       final isEnabled = (event.index == 1) ? true : false;
       add(GpsAndPermissionEvent(
-          isGpsEnabled: isEnabled,
-          isGpsPermissionGranted: state.isGpsPermissionGranted));
+        isGpsEnabled: isEnabled,
+        isGpsPermissionGranted: state.isGpsPermissionGranted,
+      ));
     });
-    return isEnabled;
+
+    return isEnable;
   }
 
   Future<void> askGpsAccess() async {
     final status = await Permission.location.request();
+
     switch (status) {
       case PermissionStatus.granted:
         add(GpsAndPermissionEvent(
             isGpsEnabled: state.isGpsEnabled, isGpsPermissionGranted: true));
         break;
+
       case PermissionStatus.denied:
+      case PermissionStatus.restricted:
       case PermissionStatus.limited:
       case PermissionStatus.permanentlyDenied:
         add(GpsAndPermissionEvent(
             isGpsEnabled: state.isGpsEnabled, isGpsPermissionGranted: false));
         openAppSettings();
-        break;
       default:
     }
   }
