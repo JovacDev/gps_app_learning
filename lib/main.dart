@@ -13,7 +13,8 @@ void main() {
       create: (context) => LocationBloc(),
     ),
     BlocProvider(
-      create: (context) => MapBloc(),
+      create: (context) =>
+          MapBloc(locationBloc: BlocProvider.of<LocationBloc>(context)),
     ),
   ], child: const MapsApp()));
 }
